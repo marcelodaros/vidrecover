@@ -7,6 +7,18 @@ VidRecover is a Python-based utility designed to automate and simplify the proce
 - **Python 3.12+**
 - LTO Tape Drive mounted and accessible by the system.
 
+## CSV Structure
+
+The master CSV file must contain at least the following columns. The script supports both header-based (first row) and position-based detection.
+
+| Column Name | Position | Description |
+|-------------|----------|-------------|
+| **Path**    | 1st      | Full absolute path of the file on the tape (e.g., `/Volumes/TAPE01/folder/file.mov`) |
+| **Media**   | 2nd      | The LTO Tape Identifier (e.g., `GN0018`) |
+| **Name**    | 4th      | The extracted filename (e.g., `file.mov`) |
+
+*Note: Determining column positions relies on standard CSV formatting.*
+
 ## Features
 
 - **Media Analysis**: Parses editing XML files (e.g., from DaVinci Resolve or Premiere Pro) to identify required media assets.
