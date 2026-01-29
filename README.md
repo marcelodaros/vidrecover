@@ -2,6 +2,11 @@
 
 VidRecover is a Python-based utility designed to automate and simplify the process of restoring media files from LTO tapes. It bridges the gap between media inventory (CSV) and editing timelines (XML), helping archivists and editors efficiently locate and retrieve specific footage.
 
+## Prerequisites
+
+- **Python 3.12+**
+- LTO Tape Drive mounted and accessible by the system.
+
 ## Features
 
 - **Media Analysis**: Parses editing XML files (e.g., from DaVinci Resolve or Premiere Pro) to identify required media assets.
