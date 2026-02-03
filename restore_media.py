@@ -33,6 +33,66 @@ def restore_media(csv_file, xml_file, destination):
         print("No files to restore found.")
         return
 
+    # Analyze found files for extensions and potential duplicates
+    all_extensions = set()
+    base_name_extensions = {} # base_name -> set of extensions found
+
+    for tape, files in tape_files_map.items():
+        for f in files:
+            base = os.path.splitext(os.path.basename(f))[0]
+            ext = os.path.splitext(f)[1].lower() # Normalize ext
+            all_extensions.add(ext)
+            
+            if base not in base_name_extensions:
+                base_name_extensions[base] = set()
+            base_name_extensions[base].add(ext)
+
+    # Check for duplicates (same name, diff ext)
+    duplicates_found = False
+    for base, exts in base_name_extensions.items():
+        if len(exts) > 1:
+            duplicates_found = True
+            break
+            
+    print("\n" + "="*40)
+    print("Media Analysis")
+    print("="*40)
+    print(f"File extensions found: {', '.join(sorted(all_extensions))}")
+    if duplicates_found:
+        print("WARNING: Found files with the same name but different extensions!")
+        # Optional: Print some examples?
+        count = 0
+        for base, exts in base_name_extensions.items():
+             if len(exts) > 1:
+                 print(f" - {base}: {', '.join(exts)}")
+                 count += 1
+                 if count >= 3:
+                     print("   ...")
+                     break
+    
+    # Prompt user for preference
+    print("\nYou can choose to restore only files with a specific extension.")
+    preferred_ext = input("Enter preferred extension to restore (e.g. .mxf) or press ENTER for ALL: ").strip().lower()
+    
+    if preferred_ext:
+        if not preferred_ext.startswith('.'):
+            preferred_ext = '.' + preferred_ext
+            
+        print(f"Filtering for extension: {preferred_ext}")
+        
+        # Filter tape_files_map
+        new_map = {}
+        for tape, files in tape_files_map.items():
+            filtered = [f for f in files if f.lower().endswith(preferred_ext)]
+            if filtered:
+                new_map[tape] = filtered
+        
+        tape_files_map = new_map
+        
+        if not tape_files_map:
+             print(f"No files found matching extension '{preferred_ext}'. Restoration aborted.")
+             return
+
     sorted_tapes = sorted(tape_files_map.keys())
     total_tapes = len(sorted_tapes)
     print(f"\nRestoration Plan:")

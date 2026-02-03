@@ -17,9 +17,12 @@ def parse_xml_media(xml_file_path):
         for file_elem in root.iter('file'):
             name_elem = file_elem.find('name')
             if name_elem is not None and name_elem.text:
-                media_names.add(name_elem.text.strip())
+                full_name = name_elem.text.strip()
+                # Store only the base name (ignore extension)
+                base_name = os.path.splitext(full_name)[0]
+                media_names.add(base_name)
     except Exception as e:
-        print(f"Error parseing XML file: {e}")
+        print(f"Error parsing XML file: {e}")
         return set()
     return media_names
 
@@ -63,7 +66,9 @@ def extract_lto_tapes(csv_file_path, xml_media_names=None):
                         continue
                         
                     if xml_media_names:
-                        if filename in xml_media_names:
+                        # Check if base name matches any in the XML list
+                        base_name = os.path.splitext(filename)[0]
+                        if base_name in xml_media_names:
                             if tape not in tape_files_map:
                                 tape_files_map[tape] = []
                             tape_files_map[tape].append(file_path)
@@ -95,7 +100,8 @@ def extract_lto_tapes(csv_file_path, xml_media_names=None):
                             file_path = first_row[0].strip()
                             if tape:
                                 if xml_media_names:
-                                    if filename in xml_media_names:
+                                    base_name = os.path.splitext(filename)[0]
+                                    if base_name in xml_media_names:
                                         if tape not in tape_files_map:
                                             tape_files_map[tape] = []
                                         tape_files_map[tape].append(file_path)
@@ -110,12 +116,13 @@ def extract_lto_tapes(csv_file_path, xml_media_names=None):
                          filename = row[3].strip()
                          file_path = row[0].strip()
                          if tape:
-                             if xml_media_names:
-                                 if filename in xml_media_names:
+                              if xml_media_names:
+                                 base_name = os.path.splitext(filename)[0]
+                                 if base_name in xml_media_names:
                                      if tape not in tape_files_map:
                                         tape_files_map[tape] = []
                                      tape_files_map[tape].append(file_path)
-                             else:
+                              else:
                                  if tape not in tape_files_map:
                                     tape_files_map[tape] = []
                                  tape_files_map[tape].append(file_path)
