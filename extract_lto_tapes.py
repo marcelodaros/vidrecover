@@ -80,7 +80,17 @@ def extract_lto_tapes(csv_file_path, xml_media_names=None):
                 for row in reader:
                     tape = row.get('Media', '').strip()
                     filename = row.get('Name', '').strip()
-                    file_path = row.get('Path', '').strip()
+                    dir_path = row.get('Path', '').strip()
+                    
+                    if not tape:
+                        continue
+
+                    # Construct full file path
+                    if dir_path and filename:
+                        file_path = os.path.join(dir_path, filename)
+                    else:
+                        file_path = dir_path or filename
+
                     
                     if not tape:
                         continue
@@ -117,7 +127,12 @@ def extract_lto_tapes(csv_file_path, xml_media_names=None):
                         if len(first_row) > 3:
                             tape = first_row[1].strip()
                             filename = first_row[3].strip()
-                            file_path = first_row[0].strip()
+                            dir_path = first_row[0].strip()
+                            if dir_path and filename:
+                                file_path = os.path.join(dir_path, filename)
+                            else:
+                                file_path = dir_path or filename
+                                
                             if tape:
                                 if xml_media_names:
                                     base_name = os.path.splitext(filename)[0]
@@ -134,7 +149,13 @@ def extract_lto_tapes(csv_file_path, xml_media_names=None):
                      if len(row) > 3:
                          tape = row[1].strip()
                          filename = row[3].strip()
-                         file_path = row[0].strip()
+                         dir_path = row[0].strip()
+                         
+                         if dir_path and filename:
+                             file_path = os.path.join(dir_path, filename)
+                         else:
+                             file_path = dir_path or filename
+                             
                          if tape:
                               if xml_media_names:
                                  base_name = os.path.splitext(filename)[0]
