@@ -13,14 +13,34 @@ def parse_xml_media(xml_file_path):
     try:
         tree = ET.parse(xml_file_path)
         root = tree.getroot()
-        # Find all <file> elements and their <name> children
+        
+        # 1. Search in <clipitem> elements (common in FCP7 XMLs used by Resolve)
+        for clip_elem in root.iter('clipitem'):
+            name_elem = clip_elem.find('name')
+            if name_elem is not None and name_elem.text:
+                full_name = name_elem.text.strip()
+                if not full_name:
+                    continue
+                # Ignore generic names often used for slugs or generators if needed
+                if full_name.lower() == "slug":
+                     continue
+                     
+                base_name = os.path.splitext(full_name)[0]
+                media_names.add(base_name)
+
+        # 2. Search in <file> elements as a fallback or addition
         for file_elem in root.iter('file'):
             name_elem = file_elem.find('name')
             if name_elem is not None and name_elem.text:
                 full_name = name_elem.text.strip()
-                # Store only the base name (ignore extension)
+                if not full_name:
+                    continue
+                if full_name.lower() == "slug":
+                     continue
+
                 base_name = os.path.splitext(full_name)[0]
                 media_names.add(base_name)
+                
     except Exception as e:
         print(f"Error parsing XML file: {e}")
         return set()
