@@ -127,6 +127,36 @@ def restore_media(csv_file, xml_file, destination):
             # Quick check of the first file to validate mount point quickly
             if files_to_copy:
                 first_file = files_to_copy[0]
+                
+                # Check normal path
+                if not os.path.exists(first_file):
+                    # Check for LTFS1_ prefix (common on macOS)
+                    # Expected: /Volumes/TAPE/... -> /Volumes/LTFS1_TAPE/...
+                    # We need to construct the potential path carefully
+                    
+                    path_parts = first_file.split(os.sep)
+                    # Typically ['', 'Volumes', 'TapeName', ...]
+                    if len(path_parts) > 3 and path_parts[1] == 'Volumes':
+                        tape_dir = path_parts[2]
+                        if not tape_dir.startswith("LTFS1_"):
+                             new_tape_dir = f"LTFS1_{tape_dir}"
+                             new_parts = list(path_parts)
+                             new_parts[2] = new_tape_dir
+                             alt_first_file = os.sep.join(new_parts)
+                             
+                             if os.path.exists(alt_first_file):
+                                 print(f"Detected tape mounted with LTFS1_ prefix at: /Volumes/{new_tape_dir}")
+                                 # Update all files in files_to_copy
+                                 new_files_list = []
+                                 for f in files_to_copy:
+                                     parts = f.split(os.sep)
+                                     parts[2] = new_tape_dir
+                                     new_files_list.append(os.sep.join(parts))
+                                     
+                                 files_to_copy = new_files_list
+                                 # Update the first_file check to pass the below check or just break loop here
+                                 first_file = alt_first_file
+
                 if not os.path.exists(first_file):
                      print(f"Warning: Cannot find expected file: {first_file}")
                      print(f"Is tape '{tape}' mounted at the correct location?")
