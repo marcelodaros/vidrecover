@@ -5,6 +5,34 @@ import shutil
 import time
 from extract_lto_tapes import extract_lto_tapes, parse_xml_media
 
+def copy_with_progress(src, dst, buffer_size=1024*1024):
+    """
+    Copies a file from src to dst with a progress bar.
+    """
+    total_size = os.path.getsize(src)
+    copied_size = 0
+    
+    with open(src, 'rb') as fsrc:
+        with open(dst, 'wb') as fdst:
+            while True:
+                buf = fsrc.read(buffer_size)
+                if not buf:
+                    break
+                fdst.write(buf)
+                copied_size += len(buf)
+                
+                percent = float(copied_size) / total_size
+                bar_length = 40
+                filled_length = int(bar_length * percent)
+                bar = '=' * filled_length + '-' * (bar_length - filled_length)
+                
+                # Print progress bar using carriage return to overwrite line
+                sys.stdout.write(f'\rProgress: [{bar}] {percent:.1%}')
+                sys.stdout.flush()
+                
+    print() # Newline after completion
+    shutil.copystat(src, dst)
+
 def restore_media(csv_file, xml_file, destination):
     """
     Coordinates the restoration of media from LTO tapes.
@@ -194,8 +222,12 @@ def restore_media(csv_file, xml_file, destination):
                         base, ext = os.path.splitext(filename)
                         dest_path = os.path.join(destination, f"{base}_{int(time.time())}{ext}")
                     
-                    print(f"Copying: {filename}")
-                    shutil.copy2(file_path, dest_path)
+                    files_remaining = len(files_to_copy) - (success_count + fail_count)
+                    print(f"Copying ({success_count + fail_count + 1}/{len(files_to_copy)}): {filename}")
+                    
+                    # shutil.copy2(file_path, dest_path)
+                    copy_with_progress(file_path, dest_path)
+                    
                     success_count += 1
                 else:
                     print(f"Error: File not found (skipped): {file_path}")
