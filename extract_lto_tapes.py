@@ -208,6 +208,71 @@ def main():
     tape_files_map = extract_lto_tapes(csv_file, xml_media_names)
     
     if tape_files_map:
+        # Analyze found files for extensions and potential duplicates
+        all_extensions = set()
+        base_name_extensions = {} # base_name -> set of extensions found
+
+        for tape, files in tape_files_map.items():
+            for f in files:
+                base = os.path.splitext(os.path.basename(f))[0]
+                ext = os.path.splitext(f)[1].lower() # Normalize ext
+                all_extensions.add(ext)
+                
+                if base not in base_name_extensions:
+                    base_name_extensions[base] = set()
+                base_name_extensions[base].add(ext)
+
+        # Check for duplicates (same name, diff ext)
+        duplicates_found = False
+        for base, exts in base_name_extensions.items():
+            if len(exts) > 1:
+                duplicates_found = True
+                break
+                
+        print("\n" + "="*40)
+        print("Media Analysis")
+        print("="*40)
+        print(f"File extensions found: {', '.join(sorted(all_extensions))}")
+        if duplicates_found:
+            print("WARNING: Found files with the same name but different extensions!")
+            count = 0
+            for base, exts in base_name_extensions.items():
+                 if len(exts) > 1:
+                     print(f" - {base}: {', '.join(exts)}")
+                     count += 1
+                     if count >= 3:
+                         print("   ...")
+                         break
+        
+        # Prompt user for preference
+        print("\nYou can choose to list only files with a specific extension.")
+        # Only prompt if we are running interactively? But this is a command line tool script.
+        # However, checking if sys.stdin.isatty() is good practice, but the user explicitly asked for the option.
+        # Assuming interactive usage.
+        try:
+             preferred_ext = input("Enter preferred extension to list (e.g. .mxf) or press ENTER for ALL: ").strip().lower()
+        except EOFError:
+             preferred_ext = ""
+
+        if preferred_ext:
+            if not preferred_ext.startswith('.'):
+                preferred_ext = '.' + preferred_ext
+                
+            print(f"Filtering for extension: {preferred_ext}")
+            
+            # Filter tape_files_map
+            new_map = {}
+            for tape, files in tape_files_map.items():
+                filtered = [f for f in files if f.lower().endswith(preferred_ext)]
+                if filtered:
+                    new_map[tape] = filtered
+            
+            tape_files_map = new_map
+            
+            if not tape_files_map:
+                 print(f"No files found matching extension '{preferred_ext}'.")
+                 return
+
         if xml_file:
             print("\nLTO Tapes containing the requested media:")
         else:
@@ -219,8 +284,10 @@ def main():
         # Only print paths if XML filter was used, to match previous behavior/requirement
         if xml_file:
              print("\nFull paths of matched media:")
-             for tape, paths in tape_files_map.items():
-                 for path in paths:
+             for tape in sorted(tape_files_map.keys()):
+                 print(f"\nTape: {tape}")
+                 print("-" * 40)
+                 for path in sorted(tape_files_map[tape]):
                      print(path)
 
     else:
